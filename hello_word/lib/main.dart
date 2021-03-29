@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:sdp_transform/sdp_transform.dart';
 
 void main() {
   runApp(MyApp());
@@ -26,13 +29,22 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  bool _offer = false;
+  RTCPeerConnection _peerConnection;
+  MediaStream _localStream;
   final _localRenderer = new RTCVideoRenderer();
   final _remoteRenderer = new RTCVideoRenderer();
   final sdpController = TextEditingController();
+
+  //necessary method
+
   @override
   void initState() {
     initRenderer();
-    _getUserMedia();
+    _createPeerConnection().then((pc) {
+      _peerConnection = pc;
+    });
+
     super.initState();
   }
 
@@ -55,13 +67,98 @@ class _MyHomePageState extends State<MyHomePage> {
     MediaStream stream =
         await navigator.mediaDevices.getUserMedia(mediaConstraints);
     _localRenderer.srcObject = stream;
-    _localRenderer.mirror = true;
+
+    return stream;
   }
 
   initRenderer() async {
     await _localRenderer.initialize();
     await _remoteRenderer.initialize();
   }
+
+  _createPeerConnection() async {
+    Map<String, dynamic> configuration = {
+      "iceServers": [
+        {"url": "stun:stun.l.google.com:19302"},
+      ]
+    };
+
+    final Map<String, dynamic> offerSdpConstraints = {
+      "mandatory": {
+        "OfferToReceiveAudio": true,
+        "OfferToReceiveVideo": true,
+      },
+      "optional": [],
+    };
+
+    _localStream = await _getUserMedia();
+    RTCPeerConnection pc =
+        await createPeerConnection(configuration, offerSdpConstraints);
+    pc.addStream(_localStream);
+
+    pc.onIceCandidate = (e) {
+      if (e.candidate != null) {
+        print(json.encode({
+          'candidate': e.candidate.toString(),
+          'sdpMid': e.sdpMid.toString(),
+          'sdpMlineIndex': e.sdpMlineIndex
+        }));
+      }
+    };
+    pc.onIceConnectionState = (e) {
+      print(e);
+    };
+    pc.onAddStream = (stream) {
+      print('addStream: ' + stream.id);
+      _remoteRenderer.srcObject = stream;
+    };
+    return pc;
+  }
+
+  void _createOffer() async {
+    RTCSessionDescription description =
+        await _peerConnection.createOffer({'offerToReceiveVideo': 1});
+    var session = parse(description.sdp);
+    print(json.encode(session));
+    _offer = true;
+    _peerConnection.setLocalDescription(description);
+  }
+
+  void _setRemoteDescription() async {
+    String jsonString = sdpController.text;
+    dynamic session = await jsonDecode('$jsonString');
+
+    String sdp = write(session, null);
+
+    RTCSessionDescription description =
+        new RTCSessionDescription(sdp, _offer ? 'answer' : 'offer');
+    print(description.toMap());
+
+    await _peerConnection.setRemoteDescription(description);
+  }
+
+  void _createAnswer() async {
+    RTCSessionDescription description =
+        await _peerConnection.createAnswer({'offerToReceiveVideo': 1});
+    var session = parse(description.sdp);
+    print(json.encode(session));
+    _offer = true;
+    _peerConnection.setLocalDescription(description);
+  }
+
+  void _setCandidate() async {
+    String jsonString = sdpController.text;
+    dynamic session = await jsonDecode('$jsonString');
+
+    print(session['candidate']);
+
+    dynamic candidate = new RTCIceCandidate(
+        session['candidate'], session['sdpMid'], session['sdpMlineIndex']);
+
+    await _peerConnection.addCandidate(candidate);
+  }
+
+  //window conposition
 
   SizedBox videoRenderers() => SizedBox(
         height: 210,
@@ -72,7 +169,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 key: Key("local"),
                 margin: EdgeInsets.fromLTRB(5.0, 5.0, 5.0, 5.0),
                 decoration: BoxDecoration(color: Colors.black),
-                child: RTCVideoView(_localRenderer),
+                child: RTCVideoView(_localRenderer, mirror: true),
               ),
             ),
             Flexible(
@@ -90,12 +187,12 @@ class _MyHomePageState extends State<MyHomePage> {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: <Widget>[
           ElevatedButton(
-            onPressed: null, //_createOffer(),
+            onPressed: _createOffer,
             child: Text("Offer"),
             style: ElevatedButton.styleFrom(onPrimary: Colors.amber),
           ),
           ElevatedButton(
-            onPressed: null, //_createAnswer(),
+            onPressed: _createAnswer,
             child: Text("Answer"),
             style: ElevatedButton.styleFrom(onPrimary: Colors.amber),
           )
@@ -116,14 +213,14 @@ class _MyHomePageState extends State<MyHomePage> {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: <Widget>[
           ElevatedButton(
-              onPressed: null, //_setRemoteDescription,
+              onPressed: _setRemoteDescription,
               child: Text("Set Remote Desc"),
               style: ElevatedButton.styleFrom(
                   primary: Colors.purple,
                   onPrimary: Colors.blue,
                   onSurface: Colors.black)),
           ElevatedButton(
-            onPressed: null, //_setCandidate,
+            onPressed: _setCandidate,
             child: Text("Set Candidate"),
             style: ElevatedButton.styleFrom(primary: Colors.blue),
           )
