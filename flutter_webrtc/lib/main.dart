@@ -9,6 +9,7 @@ import 'src/route_item.dart';
 void main() => runApp(new MyApp());
 
 class MyApp extends StatefulWidget {
+  //createstate
   @override
   _MyAppState createState() => new _MyAppState();
 }
@@ -24,6 +25,8 @@ class _MyAppState extends State<MyApp> {
   SharedPreferences _prefs;
 
   bool _datachannel = false;
+
+  //initstate
   @override
   initState() {
     super.initState();
@@ -103,12 +106,12 @@ class _MyAppState extends State<MyApp> {
               textAlign: TextAlign.center,
             ),
             actions: <Widget>[
-              FlatButton(
+              TextButton(
                   child: const Text('CANCEL'),
                   onPressed: () {
                     Navigator.pop(context, DialogDemoAction.cancel);
                   }),
-              FlatButton(
+              TextButton(
                   child: const Text('CONNECT'),
                   onPressed: () {
                     Navigator.pop(context, DialogDemoAction.connect);
