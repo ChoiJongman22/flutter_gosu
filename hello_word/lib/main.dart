@@ -56,6 +56,7 @@ class _MyHomePageState extends State<MyHomePage> {
     super.dispose();
   }
 
+  //Success
   _getUserMedia() async {
     final Map<String, dynamic> mediaConstraints = {
       'audio': false,
@@ -63,7 +64,7 @@ class _MyHomePageState extends State<MyHomePage> {
         'facingMode': 'user',
       },
     };
-
+    //Success
     MediaStream stream =
         await navigator.mediaDevices.getUserMedia(mediaConstraints);
     _localRenderer.srcObject = stream;

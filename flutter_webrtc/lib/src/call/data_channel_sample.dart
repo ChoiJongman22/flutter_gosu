@@ -7,7 +7,7 @@ import 'package:flutter_webrtc/flutter_webrtc.dart';
 
 class DataChannelSample extends StatefulWidget {
   static String tag = 'call_sample';
-
+  
   final String host;
 
   DataChannelSample({Key key, @required this.host}) : super(key: key);

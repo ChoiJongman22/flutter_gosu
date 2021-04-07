@@ -108,6 +108,7 @@ class _CallSampleState extends State<CallSample> {
     }
   }
 
+  //전화를 끊다.
   _hangUp() {
     if (_signaling != null) {
       _signaling.bye(_session.sid);

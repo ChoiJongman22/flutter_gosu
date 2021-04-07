@@ -89,12 +89,21 @@ class Signaling {
     if (_socket != null) _socket.close();
   }
 
+  //camera switch
   void switchCamera() {
     if (_localStream != null) {
       Helper.switchCamera(_localStream.getVideoTracks()[0]);
     }
   }
 
+  void muteVideo() {
+    if (_localStream != null) {
+      bool enabled = _localStream.getVideoTracks()[0].enabled;
+      _localStream.getVideoTracks()[0].enabled = !enabled;
+    }
+  }
+
+  //mic on/off
   void muteMic() {
     if (_localStream != null) {
       bool enabled = _localStream.getAudioTracks()[0].enabled;
@@ -448,7 +457,7 @@ class Signaling {
 
   Future<void> _closeSession(Session session) async {
     _localStream?.getTracks()?.forEach((element) async {
-      await element.dispose();
+      await element.stop();
     });
     await _localStream?.dispose();
     _localStream = null;

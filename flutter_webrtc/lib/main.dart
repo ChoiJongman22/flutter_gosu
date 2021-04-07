@@ -1,5 +1,4 @@
 import 'dart:core';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc_from/src/call/call_sample.dart';
 import 'package:flutter_webrtc_from/src/call/data_channel_sample.dart';
@@ -45,6 +44,7 @@ class _MyAppState extends State<MyApp> {
     ]);
   }
 
+  //build
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -73,50 +73,54 @@ class _MyAppState extends State<MyApp> {
     showDialog<T>(
       context: context,
       builder: (BuildContext context) => child,
-    ).then<void>((T value) {
-      // The value passed to Navigator.pop() or null.
-      if (value != null) {
-        if (value == DialogDemoAction.connect) {
-          _prefs.setString('server', _server);
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (BuildContext context) => _datachannel
-                      ? DataChannelSample(host: _server)
-                      : CallSample(host: _server)));
+    ).then<void>(
+      (T value) {
+        // The value passed to Navigator.pop() or null.
+        if (value != null) {
+          if (value == DialogDemoAction.connect) {
+            _prefs.setString('server', _server);
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (BuildContext context) => _datachannel
+                        ? DataChannelSample(host: _server)
+                        : CallSample(host: _server)));
+          }
         }
-      }
-    });
+      },
+    );
   }
 
   _showAddressDialog(context) {
     showDemoDialog<DialogDemoAction>(
-        context: context,
-        child: AlertDialog(
-            title: const Text('Enter server address:'),
-            content: TextField(
-              onChanged: (String text) {
-                setState(() {
-                  _server = text;
-                });
-              },
-              decoration: InputDecoration(
-                hintText: _server,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            actions: <Widget>[
-              TextButton(
-                  child: const Text('CANCEL'),
-                  onPressed: () {
-                    Navigator.pop(context, DialogDemoAction.cancel);
-                  }),
-              TextButton(
-                  child: const Text('CONNECT'),
-                  onPressed: () {
-                    Navigator.pop(context, DialogDemoAction.connect);
-                  })
-            ]));
+      context: context,
+      child: AlertDialog(
+        title: const Text('Enter server address:'),
+        content: TextField(
+          onChanged: (String text) {
+            setState(() {
+              _server = text;
+            });
+          },
+          decoration: InputDecoration(
+            hintText: _server,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        actions: <Widget>[
+          TextButton(
+              child: const Text('CANCEL'),
+              onPressed: () {
+                Navigator.pop(context, DialogDemoAction.cancel);
+              }),
+          TextButton(
+              child: const Text('CONNECT'),
+              onPressed: () {
+                Navigator.pop(context, DialogDemoAction.connect);
+              })
+        ],
+      ),
+    );
   }
 
   _initItems() {
